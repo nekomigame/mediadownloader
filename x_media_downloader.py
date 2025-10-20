@@ -24,7 +24,7 @@ class DownloaderApp(tk.Tk):
         # --- ウィジェットの作成 ---
         # ユーザーID
         ttk.Label(main_frame, text="ユーザーID (@不要):").grid(row=0, column=0, sticky=tk.W, pady=2)
-        self.username_var = tk.StringVar(value="nasa")
+        self.username_var = tk.StringVar(value="")
         ttk.Entry(main_frame, textvariable=self.username_var).grid(row=0, column=1, sticky=tk.EW, pady=2)
 
         # Cookieファイル
