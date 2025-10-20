@@ -2,3 +2,8 @@ cookies.txt
 downloads/
 .venv/
 venv/
+makeexe/
+build/
+dist/
+*.spec
+__pycache__/
