@@ -12,7 +12,7 @@ class DownloaderApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("X Media Downloader")
-        self.geometry("600x450") # ウィンドウサイズを調整
+        self.geometry("600x480") # ウィンドウサイズを調整
         self.create_widgets()
 
     def create_widgets(self):
@@ -24,7 +24,7 @@ class DownloaderApp(tk.Tk):
         # --- ウィジェットの作成 ---
         # ユーザーID
         ttk.Label(main_frame, text="ユーザーID (@不要):").grid(row=0, column=0, sticky=tk.W, pady=2)
-        self.username_var = tk.StringVar(value="")
+        self.username_var = tk.StringVar(value="nasa")
         ttk.Entry(main_frame, textvariable=self.username_var).grid(row=0, column=1, sticky=tk.EW, pady=2)
 
         # Cookieファイル
@@ -45,10 +45,22 @@ class DownloaderApp(tk.Tk):
         ttk.Entry(output_frame, textvariable=self.output_dir_var, state='readonly').grid(row=0, column=0, sticky=tk.EW)
         ttk.Button(output_frame, text="選択...", command=self.select_output_directory).grid(row=0, column=1, padx=(5, 0))
 
+        # --- 設定項目 ---
+        settings_frame = ttk.Frame(main_frame)
+        settings_frame.grid(row=3, column=1, sticky=tk.EW, pady=2)
+
         # 待機時間
-        ttk.Label(main_frame, text="ファイル間待機 (秒):").grid(row=3, column=0, sticky=tk.W, pady=2)
+        ttk.Label(main_frame, text="設定:").grid(row=3, column=0, sticky=tk.NW, pady=2)
+        ttk.Label(settings_frame, text="ファイル間待機 (秒):").pack(side=tk.LEFT)
         self.sleep_var = tk.IntVar(value=1)
-        ttk.Spinbox(main_frame, from_=0, to=60, textvariable=self.sleep_var, width=5).grid(row=3, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(settings_frame, from_=0, to=60, textvariable=self.sleep_var, width=5).pack(side=tk.LEFT, padx=(0, 10))
+
+        # ダウンロード上限
+        ttk.Label(settings_frame, text="ダウンロード上限:").pack(side=tk.LEFT)
+        self.limit_var = tk.StringVar(value="") # 文字列型にして空を許容
+        self.limit_spinbox = ttk.Spinbox(settings_frame, from_=1, to=9999, textvariable=self.limit_var, width=7)
+        self.limit_spinbox.pack(side=tk.LEFT)
+        self.limit_spinbox.set("") # 初期値は空にする
         
         # --- オプションのチェックボックス ---
         ttk.Label(main_frame, text="オプション:").grid(row=4, column=0, sticky=tk.NW, pady=5)
@@ -57,7 +69,6 @@ class DownloaderApp(tk.Tk):
         self.no_retweets_var = tk.BooleanVar(value=True)
         self.no_retweets_check = ttk.Checkbutton(main_frame, text="リツイートを含めない", variable=self.no_retweets_var)
         self.no_retweets_check.grid(row=4, column=1, sticky=tk.W, pady=5)
-
 
         # ダウンロードボタン
         self.download_button = ttk.Button(main_frame, text="ダウンロード開始", command=self.start_download_thread)
@@ -127,15 +138,7 @@ class DownloaderApp(tk.Tk):
             output_dir_base = self.output_dir_var.get()
             sleep_seconds = self.sleep_var.get()
             no_retweets = self.no_retweets_var.get()
-
-            if not target_username:
-                raise ValueError("ユーザーIDが指定されていません。")
-
-            if not os.path.exists(cookie_path):
-                raise FileNotFoundError(f"Cookieファイルが見つかりません:\n{cookie_path}")
-
-            if target_username.startswith('@'):
-                target_username = target_username[1:]
+            limit = self.limit_var.get() # 上限値を取得
             
             output_directory = os.path.join(output_dir_base, target_username)
             os.makedirs(output_directory, exist_ok=True)
@@ -157,7 +160,13 @@ class DownloaderApp(tk.Tk):
             
             # リツイートを含めないオプションを追加
             if no_retweets:
-                command.append('--no-retweets')
+                # --no-retweets の代わりに -o オプションを使用する（互換性のため）
+                command.extend(['-o', 'twitter.retweets=false'])
+
+            # ダウンロード上限のオプションを追加
+            if limit.isdigit() and int(limit) > 0:
+                # --range オプションは最新からN件を取得
+                command.extend(['--range', f'1-{limit}'])
 
             command.append(url)
 
