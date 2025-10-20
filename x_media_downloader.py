@@ -12,7 +12,7 @@ class DownloaderApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("X Media Downloader")
-        self.geometry("600x450")
+        self.geometry("600x450") # ウィンドウサイズを調整
         self.create_widgets()
 
     def create_widgets(self):
@@ -49,6 +49,15 @@ class DownloaderApp(tk.Tk):
         ttk.Label(main_frame, text="ファイル間待機 (秒):").grid(row=3, column=0, sticky=tk.W, pady=2)
         self.sleep_var = tk.IntVar(value=1)
         ttk.Spinbox(main_frame, from_=0, to=60, textvariable=self.sleep_var, width=5).grid(row=3, column=1, sticky=tk.W, pady=2)
+        
+        # --- オプションのチェックボックス ---
+        ttk.Label(main_frame, text="オプション:").grid(row=4, column=0, sticky=tk.NW, pady=5)
+        
+        # 「リツイートを含めない」ボタン
+        self.no_retweets_var = tk.BooleanVar(value=True)
+        self.no_retweets_check = ttk.Checkbutton(main_frame, text="リツイートを含めない", variable=self.no_retweets_var)
+        self.no_retweets_check.grid(row=4, column=1, sticky=tk.W, pady=5)
+
 
         # ダウンロードボタン
         self.download_button = ttk.Button(main_frame, text="ダウンロード開始", command=self.start_download_thread)
@@ -117,6 +126,7 @@ class DownloaderApp(tk.Tk):
             cookie_path = self.cookie_path_var.get()
             output_dir_base = self.output_dir_var.get()
             sleep_seconds = self.sleep_var.get()
+            no_retweets = self.no_retweets_var.get()
             
             output_directory = os.path.join(output_dir_base, target_username)
             os.makedirs(output_directory, exist_ok=True)
@@ -135,6 +145,11 @@ class DownloaderApp(tk.Tk):
             ]
             if sleep_seconds > 0:
                 command.extend(['--sleep', str(sleep_seconds)])
+            
+            # リツイートを含めないオプションを追加
+            if no_retweets:
+                command.append('--no-retweets')
+
             command.append(url)
 
             # Windowsでコンソールが一瞬表示されるのを防ぐ
@@ -179,4 +194,3 @@ class DownloaderApp(tk.Tk):
 if __name__ == "__main__":
     app = DownloaderApp()
     app.mainloop()
-
