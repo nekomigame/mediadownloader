@@ -24,7 +24,7 @@ class DownloaderApp(tk.Tk):
         # --- ウィジェットの作成 ---
         # ユーザーID
         ttk.Label(main_frame, text="ユーザーID (@不要):").grid(row=0, column=0, sticky=tk.W, pady=2)
-        self.username_var = tk.StringVar(value="nasa")
+        self.username_var = tk.StringVar(value="")
         ttk.Entry(main_frame, textvariable=self.username_var).grid(row=0, column=1, sticky=tk.EW, pady=2)
 
         # Cookieファイル
@@ -127,6 +127,15 @@ class DownloaderApp(tk.Tk):
             output_dir_base = self.output_dir_var.get()
             sleep_seconds = self.sleep_var.get()
             no_retweets = self.no_retweets_var.get()
+
+            if not target_username:
+                raise ValueError("ユーザーIDが指定されていません。")
+
+            if not os.path.exists(cookie_path):
+                raise FileNotFoundError(f"Cookieファイルが見つかりません:\n{cookie_path}")
+
+            if target_username.startswith('@'):
+                target_username = target_username[1:]
             
             output_directory = os.path.join(output_dir_base, target_username)
             os.makedirs(output_directory, exist_ok=True)
