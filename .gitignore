@@ -1,11 +1,13 @@
-cookies.txt
 downloads/
 .venv/
 venv/
 makeexe/
 build/
 dist/
-*.spec
 __pycache__/
 release/
+gallery_downloads/
+
+*.spec
 config.json
+cookies.txt
