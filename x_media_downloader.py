@@ -4,6 +4,8 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import subprocess
+import gallery_dl
+import win10toast
 
 
 class DownloaderApp(tk.Tk):
@@ -16,6 +18,10 @@ class DownloaderApp(tk.Tk):
         self.title("X Media Downloader")
         self.geometry("600x480")  # ウィンドウサイズを調整
         self.create_widgets()
+        self.notifier = None
+
+        if os.name == 'nt':
+            self.notifier = win10toast.ToastNotifier()
 
     def create_widgets(self):
         # --- UIフレームの作成 ---
@@ -87,17 +93,22 @@ class DownloaderApp(tk.Tk):
             main_frame, text="リツイートを含めない", variable=self.no_retweets_var)
         self.no_retweets_check.grid(row=4, column=1, sticky=tk.W, pady=5)
 
+        self.notification_var = tk.BooleanVar(value=True)
+        self.notification_check = ttk.Checkbutton(
+            main_frame, text="ダウンロード終了時に通知する", variable=self.notification_var)
+        self.notification_check.grid(row=5, column=1, sticky=tk.W, pady=0)
+
         # ダウンロードボタン
         self.download_button = ttk.Button(
             main_frame, text="ダウンロード開始", command=self.start_download_thread)
-        self.download_button.grid(row=5, column=0, columnspan=2, pady=10)
+        self.download_button.grid(row=6, column=0, columnspan=2, pady=0)
 
         # ログ表示エリア
         log_frame = ttk.LabelFrame(main_frame, text="ログ")
-        log_frame.grid(row=6, column=0, columnspan=2, sticky=tk.NSEW, pady=5)
+        log_frame.grid(row=7, column=0, columnspan=2, sticky=tk.NSEW, pady=0)
         log_frame.rowconfigure(0, weight=1)
         log_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(6, weight=1)
+        main_frame.rowconfigure(7, weight=1)
 
         self.log_text = tk.Text(log_frame, height=10, state='disabled')
         self.log_text.grid(row=0, column=0, sticky=tk.NSEW)
@@ -218,12 +229,15 @@ class DownloaderApp(tk.Tk):
             if return_code == 0:
                 self.after(0, self.log_message, "\n" + "-" * 100 + "\n")
                 self.after(0, self.log_message, "ダウンロードが完了しました。\n")
+                if self.notification_var.get() and self.notifier:
+                    self.notifier.show_toast("ダウンロード完了", f"{target_username}のダウンロードが完了しました。", duration=10, threaded=True)
             else:
                 error_msg = f"ダウンロードプロセスがエラーコード {return_code} で終了しました。\n"
                 self.after(0, self.log_message, "\n" + "-" * 100 + "\n")
                 self.after(0, self.log_message, error_msg)
                 self.after(0, self.show_error_message, error_msg.strip())
-
+                if self.notification_var.get() and self.notifier:
+                    self.notifier.show_toast("ダウンロードエラー",error_msg, duration=10, threaded=True)
         except Exception as e:
             self.after(0, self.log_message, f"\nプロセス開始エラー: {e}\n")
             self.after(0, self.show_error_message, e)
